@@ -28,9 +28,9 @@ setup(
     ],
     url='https://github.com/sisl/mechamodlearn/',
     packages=find_packages(),
-    classifiers=(
+    classifiers=[
         'Programming Language :: Python :: 3',
-        'Development Status :: 4 - Beta',),
+        'Development Status :: 4 - Beta',],
     version='0.0.1',
     author='rejuvyesh',
     author_email='mail@rejuvyesh.com',
