@@ -5,8 +5,7 @@
 import torch
 import sys
 import os 
-sys.path.append(os.path.abspath('C:/Users/user/smm'))
-
+sys.path.append(os.path.abspath('C:/Users/user/smm/structmechmod'))
 from structmechmod import rigidbody, utils, models
 import numpy as np
 
