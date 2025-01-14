@@ -335,7 +335,7 @@ class DeLan(RigidBodyModule):
     def mass_matrix(self, q):
         L_params, dLparamsdq = self._mass_matrix_network(q)
         print("Delan")
-        print(L_params)
+        print(f'L_parames: {L_params}')
         L = self.embed_to_L(L_params)
         print(L)
         M = L @ L.transpose(-2, -1)
@@ -413,5 +413,5 @@ class DeLan(RigidBodyModule):
         F = self._forces(q, v, u) if self._forces is not None else 0.
 
         qdd = torch.solve(F - corfor - gradpot, M)[0].squeeze(-1)
-
+        print(f'corfor: {corfor}, mass_matrix : {M}, gravitational_term : {gradpot}, Low triangulr matrix : {L}, disipative force: {F}')
         return qdd
