@@ -3,6 +3,10 @@
 # File: test_smm.py
 #
 import torch
+import sys
+import os 
+sys.path.append(os.path.abspath('C:/Users/user/smm'))
+
 from structmechmod import rigidbody, utils, models
 import numpy as np
 
