@@ -181,7 +181,8 @@ class AbstractRigidBody:
             F = self.generalized_force(q, v, u)
 
         # Solve M \qddot = F - Cv - G
-        qddot = torch.solve(F - Cv - G.unsqueeze(2), M)[0].squeeze(2)
+        print(f'what is M matrix? : {M}')
+        qddot = torch.linalg.solve(M, F - Cv - G.unsqueeze(2))[0].squeeze(2)
         return qddot
 
 
@@ -248,13 +249,17 @@ class LearnedRigidBody(RigidBodyModule):
         self._slow_corriolis_force = slow_corriolis_force
 
     def mass_matrix(self, q):
+        print(f' mass_matrix_smm: {self._mass_matrix(q)}')
         return self._mass_matrix(q)
 
     def potential(self, q):
+        print(f' potential_smm: {self._potential(q)}')
         return self._potential(q)
 
     def generalized_force(self, q, v, u):
+        print(f' generalized_force_smm: {self._generalized_force(q, v, u)}')
         return self._generalized_force(q, v, u)
+
 
     @property
     def thetamask(self):
@@ -411,7 +416,6 @@ class DeLan(RigidBodyModule):
         corfor = dMdtv - 0.5 * dKEdq
 
         F = self._forces(q, v, u) if self._forces is not None else 0.
-
-        qdd = torch.solve(F - corfor - gradpot, M)[0].squeeze(-1)
+        qdd = torch.linalg.solve(M, F - corfor - gradpot)[0].squeeze(-1)
         print(f'corfor: {corfor}, mass_matrix : {M}, gravitational_term : {gradpot}, Low triangulr matrix : {L}, disipative force: {F}')
         return qdd

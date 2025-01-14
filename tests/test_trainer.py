@@ -15,3 +15,4 @@ def test_basics():
 
     train(mod, tdata, vdata, HParams(None, 2, 0.001, 32, 0.01, 50, 50, 50.))
     
+test_basics()

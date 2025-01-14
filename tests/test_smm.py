@@ -55,7 +55,6 @@ def test_delan_smm2():
 
     for p1, p2 in zip(delan._mass_matrix_network.parameters(), smm._mass_matrix.parameters()):
         assert (p1 == p2).all()
-
     q = torch.rand(1, 2).requires_grad_()
     v = torch.rand(1, 2).requires_grad_()
     cv_d = delan.corriolisforce(q, v)
