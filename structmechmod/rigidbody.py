@@ -181,13 +181,10 @@ class AbstractRigidBody:
             F = self.generalized_force(q, v, u)
 
         # Solve M \qddot = F - Cv - G
-        print(f'what is M matrix? : {M}')
-        print(f"M shape: {M.shape}")
-        print(f"F shape: {F.shape}")
-        print(f"Cv shape: {Cv.shape}")
-        print(f"G shape before unsqueeze: {G.unsqueeze(2).shape}")
-
-        qddot = torch.linalg.solve(M, F - Cv - G.unsqueeze(2))[0].squeeze(2)
+        #내가 추가한 부분
+        qddot = torch.linalg.solve(M, F - Cv - G.unsqueeze(2)).squeeze(2)
+        
+        #qddot = torch.linalg.solve(M, F - Cv - G.unsqueeze(2))[0].squeeze(2) #원래 코드는 이거인데 cartpole에 맞춰서 차원 변경
         return qddot
 
 

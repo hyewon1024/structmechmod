@@ -112,7 +112,7 @@ def train(model, train_data, validation_data, hparams):
         os.makedirs(hparams.logdir, exist_ok=True)
         os.makedirs(os.path.join(hparams.logdir, 'logs'), exist_ok=True)
         writer = SummaryWriter(os.path.join(hparams.logdir, 'logs'))
-        
+
     torch.set_default_dtype(torch.float32)
     (x, u, xp) = train_data
     train_data = torch.utils.data.TensorDataset(torch.from_numpy(x), torch.from_numpy(u), torch.from_numpy(xp))
@@ -145,7 +145,6 @@ def train(model, train_data, validation_data, hparams):
 
                 writer.add_scalar('validation/time', valid_t.dt, epoch)
         #나중에 아래 break 지우기 
-        break
 
         scheduler.step()
 
