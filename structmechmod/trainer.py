@@ -22,9 +22,11 @@ def compute_loss(model, x, u, xp, dt):
     masks = [model.thetamask[i*qdim:(i+1)*qdim] for i in range(2)]
     q = x[:, :qdim]
     v = x[:, qdim:]
+    #print(f"x shape is : {x.size()}, q shape is {q.size()}, v shape is {v.size()} u is {u}, u shape is {u.size()}, xp is {xp.size()}")
     qp_hat, vp_hat = odestep(model, torch.tensor(0.), dt, (q, v), u=u,
                              method='rk4',
                              transforms=[lambda x: utils.wrap_to_pi(x, mask=masks[i]) for i in range(2)])
+    print(f"qp_hat : {qp_hat}, vp_hat: {vp_hat}")
     xp_hat = torch.cat((qp_hat, vp_hat), dim=1)
     diff  = (utils.diffangles2(xp, xp_hat, mask=model.thetamask)**2)
     l2_loss = diff.sum(-1).mean()
@@ -110,12 +112,11 @@ def train(model, train_data, validation_data, hparams):
         os.makedirs(hparams.logdir, exist_ok=True)
         os.makedirs(os.path.join(hparams.logdir, 'logs'), exist_ok=True)
         writer = SummaryWriter(os.path.join(hparams.logdir, 'logs'))
-
+        
+    torch.set_default_dtype(torch.float32)
     (x, u, xp) = train_data
-    print((x.shape, u.shape, xp.shape))
     train_data = torch.utils.data.TensorDataset(torch.from_numpy(x), torch.from_numpy(u), torch.from_numpy(xp))
     (x, u, xp) = validation_data
-    print((x.shape, u.shape, xp.shape))
     validation_data = torch.utils.data.TensorDataset(torch.from_numpy(x), torch.from_numpy(u), torch.from_numpy(xp))
     opt = torch.optim.AdamW(model.parameters(), lr=hparams.lr, weight_decay=1e-6, amsgrad=True)
     scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=hparams.scheduler_step_size, gamma=0.5)
@@ -143,6 +144,8 @@ def train(model, train_data, validation_data, hparams):
                     writer.add_scalar(f'validation/{k}', v, epoch)
 
                 writer.add_scalar('validation/time', valid_t.dt, epoch)
+        #나중에 아래 break 지우기 
+        break
 
         scheduler.step()
 

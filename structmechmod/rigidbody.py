@@ -182,6 +182,11 @@ class AbstractRigidBody:
 
         # Solve M \qddot = F - Cv - G
         print(f'what is M matrix? : {M}')
+        print(f"M shape: {M.shape}")
+        print(f"F shape: {F.shape}")
+        print(f"Cv shape: {Cv.shape}")
+        print(f"G shape before unsqueeze: {G.unsqueeze(2).shape}")
+
         qddot = torch.linalg.solve(M, F - Cv - G.unsqueeze(2))[0].squeeze(2)
         return qddot
 
@@ -417,5 +422,5 @@ class DeLan(RigidBodyModule):
 
         F = self._forces(q, v, u) if self._forces is not None else 0.
         qdd = torch.linalg.solve(M, F - corfor - gradpot)[0].squeeze(-1)
-        print(f'corfor: {corfor}, mass_matrix : {M}, gravitational_term : {gradpot}, Low triangulr matrix : {L}, disipative force: {F}')
+        print(f'corfor: {corfor[0]}, mass_matrix : {M[0]}, gravitational_term : {gradpot[0]}, Low triangulr matrix : {L[0]}, disipative force: {F[0]}')
         return qdd

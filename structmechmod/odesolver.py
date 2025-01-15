@@ -44,6 +44,7 @@ class RK4:
 def rk4_alt_step_func(func, t, dt, y, k1=None, u=None):
     """Smaller error with slightly more compute."""
     if k1 is None:
+        #t는 ((32, 2), (32, 2))
         k1 = func(t, y, u=u)
     k2 = func(t + dt / 3, tuple(y_ + dt * k1_ / 3 for y_, k1_ in zip(y, k1)), u=u)
     k3 = func(t + dt * 2 / 3,
@@ -54,7 +55,9 @@ def rk4_alt_step_func(func, t, dt, y, k1=None, u=None):
                  for k1_, k2_, k3_, k4_ in zip(k1, k2, k3, k4))
 
 def rk4_step_func(func, t, dt, y, k1=None, u=None):
-    if k1 is None: 
+
+    if k1 is None:
+        print(f" t type {type(u)}") 
         k1 = func(t, y, u=u)
     k2 = func(t + dt / 2, tuple(y_ + dt * k1_ / 2 for y_, k1_ in zip(y, k1)), u=u)
     k3 = func(t + dt / 2, tuple(y_ + dt * k2_ / 2 for y_, k2_ in zip(y, k2)), u=u)
@@ -66,7 +69,8 @@ def odestep(func, t, dt, y0, u=None, method='midpoint', transforms=None):
     tensor_input, func, y0, t = _check_inputs(func, y0, t)
     if transforms is None:
         transforms = [lambda x: x for _ in range(len(y0))]
-
+    print(f"func : {func}, yo : {len(y0)}, t : {t}")
+    ##문제 발생 
     dy = SOLVERS[method].step_func(func, t, dt, y0, u=u, transforms=transforms)
     y = tuple(trans(y0_ + dy_) for y0_, dy_, trans in zip(y0, dy, transforms))
     if tensor_input:
@@ -83,7 +87,7 @@ SOLVERS = {
 
 
 def _check_inputs(func, y0, t):
-
+    torch.set_default_dtype(torch.float64)
     tensor_input = False
     if torch.is_tensor(y0):
         tensor_input = True
@@ -103,5 +107,4 @@ def _check_inputs(func, y0, t):
 
     if not torch.is_floating_point(t):
         raise TypeError('`t` must be a floating point Tensor but is a {}'.format(t.type()))
-
     return tensor_input, func, y0, t
