@@ -26,7 +26,6 @@ def compute_loss(model, x, u, xp, dt):
     qp_hat, vp_hat = odestep(model, torch.tensor(0.), dt, (q, v), u=u,
                              method='rk4',
                              transforms=[lambda x: utils.wrap_to_pi(x, mask=masks[i]) for i in range(2)])
-    print(f"qp_hat : {qp_hat}, vp_hat: {vp_hat}")
     xp_hat = torch.cat((qp_hat, vp_hat), dim=1)
     diff  = (utils.diffangles2(xp, xp_hat, mask=model.thetamask)**2)
     l2_loss = diff.sum(-1).mean()
@@ -125,7 +124,7 @@ def train(model, train_data, validation_data, hparams):
     for epoch in tqdm.trange(hparams.nepochs, position=1):
         with utils.Timer() as train_t:
             train_metrics = train_epoch(model, opt, train_data, hparams.batch_size, hparams.dt, hparams.gradnorm)
-
+        
         if writer is not None:
             for k, v in train_metrics.items():
                 writer.add_scalar(f'training/{k}', v, epoch)

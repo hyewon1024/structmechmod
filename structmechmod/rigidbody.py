@@ -183,7 +183,6 @@ class AbstractRigidBody:
         # Solve M \qddot = F - Cv - G
         #내가 추가한 부분
         qddot = torch.linalg.solve(M, F - Cv - G.unsqueeze(2)).squeeze(2)
-        
         #qddot = torch.linalg.solve(M, F - Cv - G.unsqueeze(2))[0].squeeze(2) #원래 코드는 이거인데 cartpole에 맞춰서 차원 변경
         return qddot
 
@@ -419,5 +418,5 @@ class DeLan(RigidBodyModule):
 
         F = self._forces(q, v, u) if self._forces is not None else 0.
         qdd = torch.linalg.solve(M, F - corfor - gradpot)[0].squeeze(-1)
-        print(f'corfor: {corfor[0]}, mass_matrix : {M[0]}, gravitational_term : {gradpot[0]}, Low triangulr matrix : {L[0]}, disipative force: {F[0]}')
+        #print(f'corfor: {corfor[0]}, mass_matrix : {M[0]}, gravitational_term : {gradpot[0]}, Low triangulr matrix : {L[0]}, disipative force: {F[0]}')
         return qdd
