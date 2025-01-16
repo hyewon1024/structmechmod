@@ -118,7 +118,7 @@ class DelanCholeskyMMNet(torch.nn.Module):
 
             L_params, _ = self.out(qd, qd_dq)
             print("DelanCholesky")
-            print(L_params)
+            #print(L_params)
             L_diag = self._pos_enforce(L_params[:, :self._qdim])
             L_diag = L_diag + self._bias
             L_tril = L_params[:, self._qdim:]

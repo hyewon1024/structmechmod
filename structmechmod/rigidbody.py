@@ -250,15 +250,15 @@ class LearnedRigidBody(RigidBodyModule):
         self._slow_corriolis_force = slow_corriolis_force
 
     def mass_matrix(self, q):
-        print(f' mass_matrix_smm: {self._mass_matrix(q)}')
+        #print(f' mass_matrix_smm: {self._mass_matrix(q)}')
         return self._mass_matrix(q)
 
     def potential(self, q):
-        print(f' potential_smm: {self._potential(q)}')
+        #print(f' potential_smm: {self._potential(q)}')
         return self._potential(q)
 
     def generalized_force(self, q, v, u):
-        print(f' generalized_force_smm: {self._generalized_force(q, v, u)}')
+        #print(f' generalized_force_smm: {self._generalized_force(q, v, u)}')
         return self._generalized_force(q, v, u)
 
 
@@ -341,9 +341,9 @@ class DeLan(RigidBodyModule):
     def mass_matrix(self, q):
         L_params, dLparamsdq = self._mass_matrix_network(q)
         print("Delan")
-        print(f'L_parames: {L_params}')
+        #print(f'L_parames: {L_params}')
         L = self.embed_to_L(L_params)
-        print(L)
+        #print(L)
         M = L @ L.transpose(-2, -1)
         return M
 

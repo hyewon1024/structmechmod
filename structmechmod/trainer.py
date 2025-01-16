@@ -7,7 +7,7 @@ import numpy as np
 import tqdm
 import torch
 torch.set_default_dtype(torch.float64)
-
+import gym
 from torch.utils.tensorboard import SummaryWriter
 from torch.nn.utils import clip_grad_norm_
 
@@ -16,6 +16,14 @@ from structmechmod.metric_tracker import MetricTracker
 from structmechmod.odesolver import odestep
 
 
+def get_lagrangian_metrix(model, q, v, u):
+
+    mass_matrix= model.mass_matrix(q) #M
+    corrioli_term = model.corriolisforce(q, v) #Cv
+    gravitational_term=model.gradpotential(q) #G
+    generalized_force= model.generalized_force(q, v, u) #F
+
+    return mass_matrix, corrioli_term, gravitational_term, generalized_force
 
 def compute_loss(model, x, u, xp, dt):
     qdim = model._qdim
@@ -46,6 +54,8 @@ def train_epoch(model, opt, train_data, batch_size, dt, grad_norm=50.):
     loss_infos = []
     grad_norm_ls = []
     for (x, u, xp) in tqdm.tqdm(train_generator, desc='train', leave=True, position=2):
+        #하기 내가 추가한 항
+        ##
         opt.zero_grad()
         loss, loss_info = compute_loss(model, x, u, xp, dt)
         loss.backward()
@@ -115,6 +125,7 @@ def train(model, train_data, validation_data, hparams):
     torch.set_default_dtype(torch.float32)
     (x, u, xp) = train_data
     train_data = torch.utils.data.TensorDataset(torch.from_numpy(x), torch.from_numpy(u), torch.from_numpy(xp))
+    
     (x, u, xp) = validation_data
     validation_data = torch.utils.data.TensorDataset(torch.from_numpy(x), torch.from_numpy(u), torch.from_numpy(xp))
     opt = torch.optim.AdamW(model.parameters(), lr=hparams.lr, weight_decay=1e-6, amsgrad=True)
