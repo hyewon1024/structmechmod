@@ -16,6 +16,18 @@ from structmechmod import utils, rigidbody, nested, models
 from structmechmod.metric_tracker import MetricTracker
 from structmechmod.odesolver import odestep
 
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+
+def get_lagrangian_metrix(model, q, v, u):
+
+    mass_matrix= model.mass_matrix(q) #M
+    corrioli_term = model.corriolisforce(q, v) #Cv
+    gravitational_term=model.gradpotential(q) #G
+    generalized_force= model.generalized_force(q, v, u) #F
+
+    return mass_matrix, corrioli_term, gravitational_term, generalized_force
 
 #set up the cartpole environment 
 def generate_cartpole_data(env, num_samples):
@@ -57,39 +69,49 @@ if __name__== "__main__":
 
     trained_parames = train(smm, train_data, valid_data, hparams)
 
-
     obs=env.reset()
     test_datasets= generate_cartpole_data(env, num_samples=32)
+    data=[]
+    score=0
+    for i in range(100):
+        #obs=env.reset()
+        #test_datasets= generate_cartpole_data(env, num_samples=32)
+        env.render()
+        action=env.action_space.sample()
+        x_tests=test_datasets[0]
+        u_tests= test_datasets[1]
+        #Lagrangian Dynamics
+        q= torch.from_numpy(x_tests[:, :2]).requires_grad_()
+        v= torch.from_numpy(x_tests[:, 2:]).requires_grad_()
+        u=torch.from_numpy(u_tests)
 
-    env.render()
-    action=env.action_space.sample()
-    x_tests=test_datasets[0]
-    u_tests= test_datasets[1]
-    #Lagrangian Dynamics
-    q= torch.from_numpy(x_tests[:, :2]).requires_grad_()
-    v= torch.from_numpy(x_tests[:, 2:]).requires_grad_()
-    u=torch.from_numpy(u_tests)
+        mass_matrix, corrioli_term, gravitational_term, generalized_force = get_lagrangian_metrix(smm, q, v, u)
+        obs=(torch.cat((q, v), dim=1))[0]
 
-    mass_matrix= smm.mass_matrix(q)
-    corrioli_term = smm.corriolisforce(q, v)
-    generalized_force= smm.generalized_force(q, v, u)
+        #반대 Lagrangian Dynamics
+        q_= -torch.from_numpy(x_tests[:, :2]).requires_grad_()
+        v_= -torch.from_numpy(x_tests[:, 2:]).requires_grad_()
+        u_=-torch.from_numpy(u_tests)
 
-    obs=(torch.cat((q, v), dim=1))[0]
-    print(f"mass_matrix: {mass_matrix[0]}, corrioli_term: {corrioli_term[0]},generalized_force: {generalized_force[0]}")
+        mass_matrix_, corrioli_term_, gravitational_term_, generalized_force_ = get_lagrangian_metrix(smm, q_, v_, u_)
+        obs_=(torch.cat((q_, v_), dim=1))[0]
+        print(f"obs랑 {obs}, obs_:{obs_}")
+        #print(f"mass_matrix: {mass_matrix[i]}, corrioli_term: {corrioli_term[i]},gravitational_term : {gravitational_term[i]}, generalized_force: {generalized_force[i]}")
+        #print(f"symmetry mass_matrix: {mass_matrix_[i]}, symmetry corrioli_term: {corrioli_term_[i]}, gravitational_term : {gravitational_term_[i]}, symmetry generalized_force: {generalized_force_[i]}")
 
-    #반대 Lagrangian Dynamics
-    q_= -torch.from_numpy(x_tests[:, :2]).requires_grad_()
-    v_= -torch.from_numpy(x_tests[:, 2:]).requires_grad_()
-    u_=torch.from_numpy(u_tests)
-
-    mass_matrix_= smm.mass_matrix(q_)
-    corrioli_term_ = smm.corriolisforce(q_, v_)
-    generalized_force_= smm.generalized_force(q_, v_, u)
-    obs_=(torch.cat((q_, v_), dim=1))[0]
-    print(obs_)
-    #print(f"obs랑 {obs}, obs_:{obs_}")
-
-    '''
+        # Plotting
+        titles = ['Mass Matrix', 'Corioli Term', 'Gravitational Term', 'Generalized Force']
+        data = [
+            (mass_matrix- mass_matrix_),
+            (corrioli_term- corrioli_term_),
+            (gravitational_term- gravitational_term_),
+            (generalized_force- generalized_force_),]
+        data.append(data)
+        next_obs, reward, done, info = env.step(action)
+        score+=reward 
+        print(f"reward: {reward}")
+    #print(data)
+'''
     for e in range(3):
         obs=env.reset()
         test_datasets= generate_cartpole_data(env, num_samples=32)
@@ -122,14 +144,10 @@ if __name__== "__main__":
             print(f"obs랑 {obs}, obs_:{obs_}")
             break
             #print(f"mass_matrix: {mass_matrix[0]}, corrioli_term: {corrioli_term[0]},generalized_force: {generalized_force[0]}")
-
-            #dataset 모아서 obs 하나 고름 
-
-            #하기 추가한 것 
             
             next_obs, reward, done, info = env.step(action)
             if done:
                 print("training finished!")
                 break
     '''
-    env.close()
+env.close()
