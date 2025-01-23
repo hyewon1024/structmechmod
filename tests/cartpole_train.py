@@ -1,23 +1,18 @@
 import gym
 import numpy as np
-import torch 
 from structmechmod.trainer import HParams, train
-import numpy as np
 import tqdm
 import torch
 import os 
+import math
 from torch.utils.tensorboard import SummaryWriter
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 from structmechmod import utils, rigidbody, nested, models
 from structmechmod.metric_tracker import MetricTracker
 from structmechmod.odesolver import odestep
-
 from IPython import display as ipythondisplay
 from PIL import Image
-import numpy as np
-import torch
-
 torch.set_default_dtype(torch.float64)
 
 # Function to get Lagrangian matrix
@@ -28,31 +23,45 @@ def get_lagrangian_metrix(model, q, v, u):
     generalized_force = model.generalized_force(q, v, u)  # F
     return mass_matrix, corrioli_term, gravitational_term, generalized_force
 
+'''
+def get_real_lagrangian_metrix_cartpole(obs):
+
+    
+    #Assume no fiction 
+    mass_matrix= np.array([[env.total_mass, env.length*env.masscart*]])
+'''
+
+
+
+
+
+
 # Set up the CartPole environment
 def generate_cartpole_data(env, num_samples):
     obs_list = []
     next_obs_list = []
-    control_input = np.random.rand(32, 1)
+    control_input = np.random.rand(num_samples, 1)
     obs = env.reset()
     for n in range(num_samples):
         action = env.action_space.sample()
         next_obs, reward, done, info = env.step(action)
-        obs_list.append(obs)
+        obs_list.append(next_obs)
         next_obs_list.append(next_obs)
     return np.array(obs_list, dtype=np.float64), control_input, np.array(next_obs_list, dtype=np.float64)
 
 
 if __name__== "__main__":
 
-
+    utils.set_rng_seed(42)
     env=gym.make("CartPole-v1")
+    
 
     #train_data_set 
     train_data=generate_cartpole_data(env, num_samples=32)
-    valid_data=generate_cartpole_data(env, num_samples=32)
+    valid_data=generate_cartpole_data(env, num_samples=32) #32
 
     #model set 
-    thetamask= torch.tensor([0, 1, 0, 0], dtype=torch.float64)
+    thetamask= torch.tensor([0, 0, 1, 1], dtype=torch.float64)
     mass_matrix = models.DelanCholeskyMMNet(2, hidden_sizes=[32, 64, 32])
     smm = rigidbody.LearnedRigidBody(2, 1, thetamask=thetamask, mass_matrix=mass_matrix, hidden_sizes=[32, 64, 32])
 
@@ -65,7 +74,7 @@ if __name__== "__main__":
     obs=env.reset()
     test_datasets= generate_cartpole_data(env, num_samples=32)
     score=0
-
+    i=10
     # Create a folder to save images
     image_folder = "cartpole_images"
     metric_folder = "cartpole_metrics"
@@ -75,10 +84,14 @@ if __name__== "__main__":
     if not os.path.exists(metric_folder):
         os.makedirs(metric_folder)
 
-    for i in range(100): #환경을 reset하면서 여러 샘플 모으기 
+    for a in range(100): #환경을 reset하면서 여러 샘플 모으기 
         test_datasets= generate_cartpole_data(env, num_samples=32)
         action=env.action_space.sample()
         next_obs, reward, done, info = env.step(action)
+
+        print(env.state)
+        screen = env.render(mode='rgb_array')
+        img = Image.fromarray(screen)
 
         x_tests=test_datasets[0]
         u_tests= test_datasets[1]
@@ -93,29 +106,28 @@ if __name__== "__main__":
         mask = torch.tensor([1, -1], dtype=torch.float64) #symmetry:  theta -> -theta로 변경
         #반대 Lagrangian Dynamics
         q_= torch.from_numpy(x_tests[:, :2]).requires_grad_()
-        q_ = q_ * mask 
-        v_= torch.from_numpy(x_tests[:, 2:]).requires_grad_()
-        v_ = v_ * mask 
+        v_= -torch.from_numpy(x_tests[:, 2:]).requires_grad_()
         u_= torch.from_numpy(u_tests)
 
         mass_matrix_, corrioli_term_, gravitational_term_, generalized_force_ = get_lagrangian_metrix(smm, q_, v_, u_)
         obs_=(torch.cat((q_, v_), dim=1))[i]
-        print(f"obs랑 {obs}, obs_:{obs_}")
+        
         #data save 
         mass_matrix, corrioli_term, gravitational_term, generalized_force = map(lambda x: x.detach().numpy(), [mass_matrix, corrioli_term, gravitational_term, generalized_force])
         mass_matrix_, corrioli_term_, gravitational_term_, generalized_force_ = map(lambda x: x.detach().numpy(), [mass_matrix_, corrioli_term_, gravitational_term_, generalized_force_])
-
         # 파일에 데이터를 한 줄씩 저장
-        with open(f'{metric_folder}/my_data_{i+1}.txt', 'w') as file:
+        with open(f'{metric_folder}/my_data_{a+1}.txt', 'w') as file:
             file.write('Mass Matrix, Corrioli Term, Gravitational Term, Generalized Force\n')  # 헤더
             file.write(f'{mass_matrix[i]}\n,  {corrioli_term[i]}\n, {gravitational_term[i]}\n, {generalized_force[i]}\n')
+
             file.write('Symmetry Metrics\n')
-            file.write(f'{mass_matrix_[i]}\n,  {corrioli_term_[i]}\n, {gravitational_term_[i]}\n, {generalized_force_[i]}')
+            file.write(f'{mass_matrix_[i]}\n,  {corrioli_term_[i]}\n, {gravitational_term_[i]}\n, {generalized_force_[i]}\n')
+            file.write(f'obs: {obs} and symmetry obs: {obs_}')
 
         # Save the rendered image of the environment
         screen = env.render(mode='rgb_array')
         img = Image.fromarray(screen)
-        img.save(f"{image_folder}/image_{i+1}.png")
+        img.save(f"{image_folder}/image_{a+1}.png")
 
         score+=reward 
         print(f"reward: {reward}")

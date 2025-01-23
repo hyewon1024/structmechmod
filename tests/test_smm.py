@@ -62,6 +62,6 @@ def test_delan_smm2():
     assert np.allclose(cv_d.detach(), cv_s.detach())
     M_d = delan.mass_matrix(q)
     M_s = smm.mass_matrix(q)
-
+    print(f'{q}\n, {v}\n, {cv_s}\n, {M_s}')
 if __name__ == '__main__':
     test_delan_smm2()
