@@ -69,7 +69,7 @@ class AbstractRigidBody:
             KE = 0.5 * v.unsqueeze(1) @ Mv
 
             Cv_KE = torch.autograd.grad(KE.sum(), q, retain_graph=True, create_graph=True)[0]
-
+            
             gMv = torch.stack([
                 torch.autograd.grad(Mv[:, i].sum(), q, retain_graph=True, create_graph=True)[0]
                 for i in range(q.size(1))
@@ -183,7 +183,6 @@ class AbstractRigidBody:
         # Solve M \qddot = F - Cv - G
         #내가 추가한 부분
         qddot = torch.linalg.solve(M, F - Cv - G.unsqueeze(2)).squeeze(2)
-        #qddot = torch.linalg.solve(M, F - Cv - G.unsqueeze(2))[0].squeeze(2) #원래 코드는 이거인데 cartpole에 맞춰서 차원 변경
         return qddot
 
 

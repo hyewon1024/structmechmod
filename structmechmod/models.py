@@ -68,6 +68,7 @@ class CholeskyMMNet(torch.nn.Module):
         self.embed = embed
         self.out = torch.nn.Linear(hidden_sizes[-1], int(qdim * (qdim + 1) / 2))
 
+
     def forward(self, q):
         B = q.size(0)
         if self._qdim > 1:
@@ -78,7 +79,7 @@ class CholeskyMMNet(torch.nn.Module):
             L_tril = L_params[:, self._qdim:]
             L = q.new_zeros(B, self._qdim, self._qdim)
             L = utils.bfill_lowertriangle(L, L_tril)
-            L = utils.bfill_diagonal(L, L_diag)
+            L = utils.bfill_diagonal(L, L_diag) 
             M = L @ L.transpose(-2, -1)
 
         else:

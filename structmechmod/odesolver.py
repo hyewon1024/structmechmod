@@ -104,4 +104,5 @@ def _check_inputs(func, y0, t):
 
     if not torch.is_floating_point(t):
         raise TypeError('`t` must be a floating point Tensor but is a {}'.format(t.type()))
+    #input이 tensor인지 여부, y[0], u를 시작으로 하는 함수, y0, t 도로 반환 
     return tensor_input, func, y0, t
